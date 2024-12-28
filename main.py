@@ -10,7 +10,7 @@ Revision History:
 from idlelib.debugger_r import close_subprocess_debugger
 
 from PyQt6.QtWidgets import QApplication, QLabel, QWidget, QGridLayout, QLineEdit, QPushButton, QMainWindow, \
-    QTableWidget, QTableWidgetItem, QDialog
+    QTableWidget, QTableWidgetItem, QDialog, QLayout, QVBoxLayout, QComboBox
 from PyQt6.QtGui import QAction
 import sys
 import sqlite3
@@ -57,7 +57,25 @@ class MainWindow(QMainWindow):
 class InsertDialog(QDialog):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Student Management System")
+        self.setWindowTitle("Insert Student Data")
+        self.setFixedWidth(300)
+        self.setFixedHeight(300)
+
+        layout = QVBoxLayout()
+
+        # Student name widget was added
+        student_name = QLineEdit()
+        student_name.setPlaceholderText("Student Name")
+        layout.addWidget(student_name)
+
+        # Dropdown box or combo box was implemented
+        course_name = QComboBox()
+        courses = ["Programming Dynamic Websites", "Technology Infrastructure: Networking", "Data Modelling", "Database: SQL", "Software Quality Assurance"]
+        course_name.addItem(courses)
+        layout.addWidget(course_name)
+
+
+        self.setLayout(layout)
 
 
 app = QApplication(sys.argv)
