@@ -7,14 +7,15 @@ Revision History:
     Created on December 27th 2024. By Juan (David) Barrios Rozo
     Edited on December 28th 2024. By Juan (David) Barrios Rozo
 """
+from idlelib import statusbar
 
 from PyQt6.QtWidgets import QApplication, QLabel, QWidget, QGridLayout, QLineEdit, QPushButton, QMainWindow, \
-     QTableWidget, QTableWidgetItem, QDialog, QLayout, QVBoxLayout, QComboBox, QToolBar
+    QTableWidget, QTableWidgetItem, QDialog, QLayout, QVBoxLayout, QComboBox, QToolBar, QStatusBar
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt
 import sys
 import sqlite3
-
+import funcitons
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -54,6 +55,34 @@ class MainWindow(QMainWindow):
         toolbar.addAction(add_student_action)
         toolbar.addAction(search_action)
 
+        # Integrate a status bar and a status bar elements to the program
+        self.statusbar = QStatusBar()
+        self.setStatusBar(self.statusbar)
+
+        # Adding clickable cells
+        self.table.cellClicked.connect(self.cell_clicked)
+
+    def cell_clicked(self):
+        edit_button = QPushButton("Edit Record")
+        edit_button.clicked.connect(self.edit)
+
+        delete_button = QPushButton("Delete Record")
+        delete_button.clicked.connect(self.delete)
+
+        children = self.findChildren(QPushButton)
+        if children:
+            for child in children:
+                self.statusbar.removeWidget(child)
+
+        self.statusbar.addWidget(edit_button)
+        self.statusbar.addWidget(delete_button)
+
+        # Signature was integrated with the program
+        signature = QLabel(funcitons.display_copyright())
+        self.statusbar.addPermanentWidget(signature)
+        # self.statusbar.setVisible(True)
+
+
     def load_data(self):
         connection = sqlite3.connect("database.db")
         results = connection.execute("SELECT * FROM students")
@@ -73,6 +102,74 @@ class MainWindow(QMainWindow):
         dialog = SearchDialog()
         dialog.exec()
 
+    def edit(self):
+        dialog = EditDialog()
+        dialog.exec()
+
+    def delete(self):
+        dialog = DeleteDialog()
+        dialog.exec()
+
+class EditDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Update Student Data")
+        self.setFixedWidth(300)
+        self.setFixedHeight(300)
+
+        layout = QVBoxLayout()
+
+        # Allow user to get the name/data based on the selected row
+        index = main_window.table.currentRow()
+        student_name = main_window.table.item(index, 1).text()
+
+        # Get id from selected row
+        self.student_id = main_window.table.item(index, 0).text()
+
+        # Student name widget
+        self.student_name = QLineEdit(student_name)
+        self.student_name.setPlaceholderText("Student Name")
+        layout.addWidget(self.student_name)
+
+        # Dropdown box
+        course_name = main_window.table.item(index, 2).text()
+        self.course_name = QComboBox
+
+        self.course_name = QComboBox()
+        courses = ["Programming Dynamic Websites", "Technology Infrastructure: Networking", "Data Modelling",
+                   "Database: SQL", "Software Quality Assurance"]
+        self.course_name.addItems(courses)
+        self.course_name.setCurrentText(course_name)
+        layout.addWidget(self.course_name)
+
+        # Implementation of the contact info widget
+        self.contact = QLineEdit()
+        self.contact.setPlaceholderText("Student Contact Information")
+        layout.addWidget(self.contact)
+
+        # Submission button
+        button = QPushButton("Update")
+        button.clicked.connect(self.update_student)
+        layout.addWidget(button)
+
+        self.setLayout(layout)
+
+    def update_student(self):
+        connection = sqlite3.connect("database.db")
+        cursor = connection.cursor()
+        cursor.execute("UPDATE students SET name = ?, course = ?, mobile = ? WHERE id = ?",
+                       (self.student_name.text(), self.course_name.itemText(self.course_name.currentIndex()),
+                        self.contact.text(), self.student_id))
+
+        connection.commit()
+        cursor.close()
+        connection.close()
+
+        # Refresh the table
+        main_window.load_data()
+
+class DeleteDialog(QDialog):
+    pass
 
 class InsertDialog(QDialog):
     def __init__(self):
