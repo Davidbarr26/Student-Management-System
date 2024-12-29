@@ -1,16 +1,14 @@
 """
 Project: PythonProject
 program: Student Management System Program
-Purpose: To create and demonstrate the implementation of a SQL database and a GUI (Graphic User Interface)
+Purpose: To create and demonstrate the implementation of a SQLite database and a GUI (Graphic User Interface)
          such as PyQt6 to make a fully functional student management system
 Revision History:
     Created on December 27th 2024. By Juan (David) Barrios Rozo
     Edited on December 28th 2024. By Juan (David) Barrios Rozo
 """
-from idlelib import statusbar
-
 from PyQt6.QtWidgets import QApplication, QLabel, QWidget, QGridLayout, QLineEdit, QPushButton, QMainWindow, \
-    QTableWidget, QTableWidgetItem, QDialog, QLayout, QVBoxLayout, QComboBox, QToolBar, QStatusBar
+     QTableWidget, QTableWidgetItem, QDialog, QVBoxLayout, QComboBox, QToolBar, QStatusBar, QMessageBox
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt
 import sys
@@ -34,6 +32,7 @@ class MainWindow(QMainWindow):
         about_action = QAction("About", self)
         add_student_action.triggered.connect(self.insert)
         help_menu_item.addAction(about_action)
+        about_action.triggered.connect(self.about)
 
         # If the Help item is not shown use the following
         #about_action.setMenuRole(QAction.MenuRole.NoRole)
@@ -110,6 +109,21 @@ class MainWindow(QMainWindow):
         dialog = DeleteDialog()
         dialog.exec()
 
+    def about(self):
+        dialog = AboutDialog
+        dialog.exec()
+
+
+class AboutDialog(QMessageBox):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("About")
+        content = """
+        This app was created using SQL and PyQt6 GUI and it is a demo of a fully functional student management system.
+        """
+
+        self.setText(content)
+
 class EditDialog(QDialog):
     def __init__(self):
         super().__init__()
@@ -169,7 +183,44 @@ class EditDialog(QDialog):
         main_window.load_data()
 
 class DeleteDialog(QDialog):
-    pass
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Delete Student Data")
+
+        layout = QGridLayout()
+        confirmation = QLabel("Are you sure you want to delete?")
+        yes = QPushButton("Yes")
+        no = QPushButton("No")
+
+        layout.addWidget(confirmation, 0, 0, 1, 2)
+        layout.addWidget(yes, 1, 0)
+        layout.addWidget(no, 1, 1)
+        self.setLayout(layout)
+
+        yes.clicked.connect(self.delete_student)
+        no.clicked.connect(self.close())
+
+    def delete_student(self):
+        # Get selected row index and student ID
+        index = main_window.table.currentRow()
+        student_id = main_window.table.item(index, 0).text()
+
+        connection = sqlite3.connect("database.db")
+        cursor = connection.cursor()
+        cursor.execute("DELETE from students WHERE id = ?", (student_id, ))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        main_window.load_data()
+
+        self.close()
+
+        # Confirmation widget that will keep the program running and prevent it from closing after the user delete data
+        confirmation_widget = QMessageBox
+        confirmation_widget.setWindowTitle("Success")
+        confirmation_widget.setText("The record was deleted successfully!")
+        confirmation_widget.exec()
+
 
 class InsertDialog(QDialog):
     def __init__(self):
